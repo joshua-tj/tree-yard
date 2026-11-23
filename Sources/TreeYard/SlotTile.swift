@@ -209,7 +209,8 @@ private struct BranchName: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Text(branch ?? "detached HEAD")
+            // Drop the owner prefix ("joshua/"): everything up to and including the first slash.
+            Text(branch.map { $0.split(separator: "/", maxSplits: 1).last.map(String.init) ?? $0 } ?? "detached HEAD")
                 .font(Fonts.mono(14, .medium))
                 .foregroundStyle(branch == nil ? T.muted : T.fg)
                 .lineLimit(1)
