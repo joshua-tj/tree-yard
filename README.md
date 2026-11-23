@@ -18,6 +18,7 @@ release the slot.
 - [How state is detected](#how-state-is-detected)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
+- [License](#license)
 
 ## Quick start
 
@@ -294,3 +295,8 @@ TREEYARD_SCRIPT="start:1,sleep:8,menu:services,sleep:5,stop:1" \
 
 The debug and release builds share settings, so the debug build changes which folder the release build opens
 next.
+
+## License
+
+Tree Yard is released under the [MIT License](LICENSE). The bundled Fraunces font is licensed separately
+under the [SIL Open Font License](Resources/Fraunces-OFL.txt).
