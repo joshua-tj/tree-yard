@@ -22,6 +22,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/TreeYard"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/Fraunces.ttf "$APP/Contents/Resources/Fraunces.ttf"
+cp Resources/Fraunces-OFL.txt "$APP/Contents/Resources/Fraunces-OFL.txt"
 
 # The icon is drawn by the app itself, then packed into an .icns.
 ICONSET="build/AppIcon.iconset"

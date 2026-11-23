@@ -14,7 +14,7 @@ struct CmdResult {
 }
 
 enum Shell {
-    /// The user's login-shell PATH, so git, gh, node and friends resolve as they do in a terminal.
+    /// The user's interactive-shell PATH, so git, gh, node and friends resolve as they do in a terminal.
     private static let environment: Task<[String: String], Never> = Task.detached {
         var env = ProcessInfo.processInfo.environment
         let home = NSHomeDirectory()

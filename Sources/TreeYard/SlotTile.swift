@@ -231,7 +231,7 @@ private struct BranchName: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-        .pointerCursor()
+                .pointerCursor()
                 .opacity(hover || copied ? 1 : 0)
                 .accessibilityLabel(copied ? "Copied branch name" : "Copy branch name")
             }
@@ -264,7 +264,7 @@ struct StackStatus: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-        .pointerCursor()
+            .pointerCursor()
             .trackFrame($servicesFrame)
             .help("\(up) of \(slot.services.count) services up")
             .accessibilityLabel("\(up) of \(slot.services.count) services up. Show services")
@@ -300,25 +300,25 @@ struct StackStatus: View {
             VStack(alignment: .trailing, spacing: 6) {
                 label("Running", color: T.fg) { RunningMark() }
                 HStack(spacing: 10) {
-                servicesButton
-                if let port = slot.port {
-                    Button {
-                        store.openStack(slot.id)
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(verbatim: ":\(port)")
-                                .font(Fonts.mono(12, .medium))
-                                .underline(true, color: T.leafFg.opacity(hover ? 1 : 0.4))
-                            Image(systemName: "arrow.up.right").font(.system(size: 9, weight: .semibold))
+                    servicesButton
+                    if let port = slot.port {
+                        Button {
+                            store.openStack(slot.id)
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(verbatim: ":\(port)")
+                                    .font(Fonts.mono(12, .medium))
+                                    .underline(true, color: T.leafFg.opacity(hover ? 1 : 0.4))
+                                Image(systemName: "arrow.up.right").font(.system(size: 9, weight: .semibold))
+                            }
+                            .foregroundStyle(T.leafFg)
+                            .contentShape(Rectangle())
                         }
-                        .foregroundStyle(T.leafFg)
-                        .contentShape(Rectangle())
+                        .buttonStyle(.plain)
+                        .pointerCursor()
+                        .onHover { hover = $0 }
+                        .help("Open the dev stack at localhost:\(port)")
                     }
-                    .buttonStyle(.plain)
-        .pointerCursor()
-                    .onHover { hover = $0 }
-                    .help("Open the dev stack at localhost:\(port)")
-                }
                 }
             }
         }
@@ -394,7 +394,7 @@ struct PRSummary: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-        .pointerCursor()
+            .pointerCursor()
             .onHover { hover = $0 }
             .help("\(pr.status.label) · \(pr.title)")
             .accessibilityLabel("Pull request #\(pr.number), \(pr.status.label.lowercased())")

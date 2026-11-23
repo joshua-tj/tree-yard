@@ -21,7 +21,7 @@ release the slot.
 
 ```sh
 ./scripts/build-app.sh
-open "build/Tree Yard.app" --args ~/.treehouse/patterns-bf4c10
+open "build/Tree Yard.app" --args ~/worktrees/my-app
 ```
 
 The path is optional. Without it the app opens the last folder it used, or asks for one. Switch folders from
@@ -45,9 +45,9 @@ Run and Stop need a `treeyard.json` in the worktree directory. See
 Any folder whose subfolders are git checkouts, or each hold one:
 
 ```
-patterns-bf4c10/
-  1/patterns/     <- slot 1
-  2/patterns/     <- slot 2
+my-app/
+  1/my-app/       <- slot 1
+  2/my-app/       <- slot 2
   treeyard.json   <- how to run things in this pool
 ```
 
