@@ -5,6 +5,8 @@ numbered slot showing its branch, how far it is from main, its pull request, and
 running. From a slot you can run or stop the stack, rebase, switch or create a branch, open the editor, and
 release the slot.
 
+![Tree Yard showing six slots: two running, one stopped and three free](docs/screenshot.png)
+
 ## Contents
 
 - [Quick start](#quick-start)
