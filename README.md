@@ -42,18 +42,76 @@ Run and Stop need a `treeyard.json` in the worktree directory. See
 
 ## The worktree directory
 
-Any folder whose subfolders are git checkouts, or each hold one:
+The folder you open is the pool. Each direct subfolder of the pool is one slot, and a slot must be either a
+git checkout itself or hold one exactly one level down.
 
 ```
-my-app/
-  1/my-app/       <- slot 1
-  2/my-app/       <- slot 2
-  treeyard.json   <- how to run things in this pool
+my-app-pool/            <- the pool: open this folder
+  1/                    <- a slot; its folder name is the slot's name
+    my-app/             <- the checkout (has a .git file or folder)
+  2/
+    my-app/
+  treeyard.json         <- how to run things in this pool
 ```
 
-The subfolder's name is the slot's name. A slot with a detached HEAD is shown as free. If the folder is a
-[treehouse](https://github.com/kunchenguid/treehouse) pool, leases from `treehouse-state.json` are shown on
-the tiles.
+**The rules**
+
+- **Slot name.** The slot folder's name is the tile's label and the value of `{slot}`. The checkout folder's
+  name is never read, so it can be anything.
+- **Depth.** The checkout is the slot folder or a direct child of it. Anything deeper is not found.
+- **Checkout.** Any folder with a `.git` entry counts: a worktree, a full clone, or a mix of both in one pool.
+- **Order.** Slots are sorted by name, with numbers in numeric order (`2` before `10`). `{index}` is the
+  slot's 1-based position in that order.
+- **Ignored.** Hidden folders, plain files, and subfolders with no checkout are skipped.
+- **Rescanned.** The pool is re-read every 15 seconds, so added, removed or renamed slots show up without a
+  restart.
+
+**Valid layouts**
+
+```
+# Numbered slots, checkout named after the repo (treehouse's default)
+pool/1/my-app/
+pool/2/my-app/
+
+# Numbered slots, checkout named <slot>-<repo> or <repo>-<slot>
+pool/1/1-my-app/
+pool/2/my-app-2/
+
+# Flat: each slot folder is itself the checkout
+pool/1/
+pool/2/
+
+# Named slots
+pool/alpha/my-app/
+pool/beta/my-app/
+```
+
+With named slots, `{slot}` is `alpha`, so a template such as `"port": "3{slot}00"` no longer makes a port.
+Use `{index}` there instead: `"port": "3{index}00"`.
+
+**Layouts that don't work**
+
+```
+# Too deep: the checkout is two levels below the slot
+pool/1/src/my-app/
+
+# Flat with the repo in the name: it works, but the slot is "1-my-app", not "1"
+pool/1-my-app/
+
+# Outside the pool: only subfolders of the opened folder are scanned
+~/code/my-app-1/
+~/code/my-app-2/
+```
+
+For the last case, open the parent folder (`~/code`) as the pool instead. Every checkout in it becomes a slot.
+
+**Treehouse pools.** A [treehouse](https://github.com/kunchenguid/treehouse) pool
+(`~/.treehouse/<repo>-<hash>`) works as it is, including with `unique_leaf` or a `worktree_path` that keeps
+the numbered slot folder, such as `{pool}/{slot}/{slot}-{repo}`. A `worktree_path` that drops the slot folder
+or leaves the pool falls under the layouts above that don't work. Leases from `treehouse-state.json` are
+shown on the tiles.
+
+A slot with a detached HEAD is shown as free.
 
 ## Configure a pool: `treeyard.json`
 
