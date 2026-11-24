@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 enum PRStatus: Equatable {
@@ -70,6 +71,29 @@ struct Service: Equatable, Identifiable {
     var id: String { name }
 }
 
+/// How a slot's branch takes in new commits from main.
+enum UpdateMethod: String, CaseIterable {
+    case rebase, merge
+
+    var label: String { self == .rebase ? "Rebase" : "Merge" }
+}
+
+/// A terminal app Tree Yard knows how to open a folder in.
+struct TerminalApp: Identifiable, Equatable {
+    var id: String
+    var name: String
+
+    static let known = [
+        TerminalApp(id: "com.mitchellh.ghostty", name: "Ghostty"),
+        TerminalApp(id: "com.googlecode.iterm2", name: "iTerm"),
+        TerminalApp(id: "dev.warp.Warp-Stable", name: "Warp"),
+        TerminalApp(id: "com.apple.Terminal", name: "Terminal"),
+    ]
+
+    var url: URL? { NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) }
+    static var installed: [TerminalApp] { known.filter { $0.url != nil } }
+}
+
 /// Commits behind before the count is flagged as worth a rebase.
 let staleAfter = 20
 
@@ -83,7 +107,6 @@ struct RootConfig: Equatable {
     var url: String?
     var release: String?
     var editor: String?
-    var terminal: String?
     /// Service names and port templates, in the order they are listed.
     var services: [ServiceTemplate] = []
 
@@ -111,8 +134,7 @@ struct RootConfig: Equatable {
         return (
             RootConfig(
                 start: string("start"), stop: string("stop"), port: string("port"), url: string("url"),
-                release: string("release"), editor: string("editor"), terminal: string("terminal"),
-                services: services),
+                release: string("release"), editor: string("editor"), services: services),
             nil
         )
     }

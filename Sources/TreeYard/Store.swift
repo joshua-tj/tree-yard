@@ -6,6 +6,7 @@ enum ActiveDialog: Equatable {
     case newBranch(String)
     case release(String)
     case setup
+    case settings
 }
 
 struct AlertInfo: Identifiable {
@@ -25,11 +26,16 @@ final class Store: ObservableObject {
     @Published var mainSubject: String?
     @Published var mainDate: Date?
     @Published var fetching = false
+    @Published var refreshing = false
     @Published var config = RootConfig()
     @Published var configError: String?
     @Published var dialog: ActiveDialog?
     @Published var alert: AlertInfo?
     @Published var menu: MenuRequest?
+
+    /// Settings, kept in the app's preferences. An empty terminal means the first one installed.
+    @Published var terminal: String { didSet { defaults.set(terminal, forKey: "terminal") } }
+    @Published var updateMethod: UpdateMethod { didSet { defaults.set(updateMethod.rawValue, forKey: "updateMethod") } }
 
     private var loop: Task<Void, Never>?
     private var generation = 0
@@ -46,6 +52,8 @@ final class Store: ObservableObject {
     var baseName: String { base.hasPrefix("origin/") ? String(base.dropFirst(7)) : base }
 
     init() {
+        terminal = defaults.string(forKey: "terminal") ?? ""
+        updateMethod = defaults.string(forKey: "updateMethod").flatMap(UpdateMethod.init) ?? .rebase
         recents = defaults.stringArray(forKey: "recentRoots") ?? []
         let args = CommandLine.arguments.dropFirst().filter { !$0.hasPrefix("-") }
         var isDir: ObjCBool = false
@@ -100,7 +108,7 @@ final class Store: ObservableObject {
             case "dialog":
                 dialog =
                     p[1] == "branch" ? .changeBranch(p[2]) : p[1] == "new" ? .newBranch(p[2])
-                    : p[1] == "release" ? .release(p[2]) : .setup
+                    : p[1] == "release" ? .release(p[2]) : p[1] == "settings" ? .settings : .setup
             default: break
             }
             NSLog("treeyard script: %@ -> %@", String(step), slots.map { "\($0.id):\($0.branch ?? "-"):\($0.stack)" }.joined(separator: " "))
@@ -160,10 +168,16 @@ final class Store: ObservableObject {
         }
     }
 
+    /// A refresh the user asked for. `refreshing` stays on long enough for the button's spin to be seen.
     func refreshNow() {
+        guard !refreshing, root != nil else { return }
+        refreshing = true
         Task {
+            async let floor: Void? = try? Task.sleep(nanoseconds: 700_000_000)
             await fetch()
             await refreshPRs()
+            _ = await floor
+            refreshing = false
         }
     }
 
@@ -415,17 +429,19 @@ final class Store: ObservableObject {
         guard let slot = slot(id), slot.branch != nil, !slot.rebasing else { return }
         update(id) { $0.rebasing = true }
         let base = self.base
+        let method = updateMethod
         Task {
             if base.hasPrefix("origin/") {
                 _ = await Git.run(["fetch", "origin", String(base.dropFirst(7)), "--quiet"], at: slot.path, timeout: 180)
             }
-            let result = await Git.run(["rebase", "--autostash", base], at: slot.path, timeout: 300)
+            let verb = method.rawValue
+            let result = await Git.run([verb, "--autostash", base], at: slot.path, timeout: 300)
             if !result.ok {
-                _ = await Git.run(["rebase", "--abort"], at: slot.path)
-                fail("Rebase stopped on conflicts and was aborted", result)
+                _ = await Git.run([verb, "--abort"], at: slot.path)
+                fail("\(method.label) stopped on conflicts and was aborted", result)
             } else if (result.out + result.err).contains("autostash resulted in conflicts") {
                 alert = AlertInfo(
-                    title: "Rebased slot \(id), but your uncommitted changes conflict",
+                    title: "\(method == .rebase ? "Rebased" : "Merged into") slot \(id), but your uncommitted changes conflict",
                     message: "They could not be reapplied cleanly and are still in the stash. See `git stash list` in the worktree.")
             }
             update(id) { $0.rebasing = false }
@@ -515,23 +531,11 @@ final class Store: ObservableObject {
         }
     }
 
-    /// Opens a terminal window in the worktree: the first installed of these, ending with Terminal.
-    private static let terminals = [
-        "com.mitchellh.ghostty", "com.googlecode.iterm2", "dev.warp.Warp-Stable", "com.apple.Terminal",
-    ]
-
+    /// Opens a terminal window in the worktree: the one chosen in Settings, or the first installed.
     func openTerminal(_ id: String) {
         guard let slot = slot(id) else { return }
-        if let template = config.terminal {
-            Task {
-                let result = await Shell.sh(config.expand(template, slot: slot, shell: true), cwd: slot.path)
-                if !result.ok { fail("Couldn't open a terminal", result) }
-            }
-            return
-        }
-        guard let app = Self.terminals.lazy.compactMap({
-            NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0)
-        }).first else { return }
+        let installed = TerminalApp.installed
+        guard let app = (installed.first { $0.id == terminal } ?? installed.first)?.url else { return }
         NSWorkspace.shared.open(
             [URL(fileURLWithPath: slot.path)], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     }
@@ -619,7 +623,6 @@ final class Store: ObservableObject {
             - "release": command that frees a slot, run in the pool folder. Without it, Tree Yard stashes tracked changes and detaches at the default branch.
             - "services": optional list of the stack's services, each {"name": "api", "port": "30{slot}1"}. Tree Yard shows which are up by their ports.
             - "editor": command that opens the worktree in an editor. Defaults to VS Code.
-            - "terminal": command that opens a terminal in the worktree. Defaults to Ghostty, iTerm or Warp if installed, else Terminal.
 
             Every value may use {slot} (the slot's folder name, such as 1), {index} (its 1-based position), {port} and \
             {path} (the worktree, already shell-quoted in commands). Commands also get TREEYARD_SLOT, TREEYARD_INDEX, \

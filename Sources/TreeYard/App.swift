@@ -34,6 +34,9 @@ struct TreeYardApp: App {
             CommandGroup(replacing: .newItem) {
                 Button("Open Directory…") { store.pickRoot() }.keyboardShortcut("o")
             }
+            CommandGroup(replacing: .appSettings) {
+                Button("Settings…") { store.dialog = .settings }.keyboardShortcut(",")
+            }
             CommandGroup(after: .toolbar) {
                 Button("Refresh") { store.refreshNow() }.keyboardShortcut("r")
             }

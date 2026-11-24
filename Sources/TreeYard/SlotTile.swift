@@ -153,7 +153,7 @@ struct SlotTile: View {
                     } else {
                         Image(systemName: "arrow.down").font(.system(size: 10, weight: .semibold))
                     }
-                    Text("Rebase")
+                    Text(store.updateMethod.label)
                 }
             }
             .buttonStyle(.aurora(.outline))

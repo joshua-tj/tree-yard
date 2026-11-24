@@ -143,7 +143,6 @@ is re-read every 15 seconds, so edits apply without a restart.
 | `services` | List of `{"name", "port"}`. The tile shows how many are up, with the full list on click.                  |
 | `release`  | Frees a slot, run in the pool folder. Without it, Tree Yard stashes tracked changes and detaches at main. |
 | `editor`   | Opens the worktree in an editor. Defaults to VS Code.                                                     |
-| `terminal` | Opens a terminal in the worktree. Defaults to Ghostty, iTerm or Warp if installed, else Terminal.         |
 
 **Placeholders**, filled per slot in every value:
 
@@ -201,9 +200,9 @@ Don't put secrets in `treeyard.json`.
 | Control             | What it does                                                                                  |
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | Run / Stop          | Starts or stops the dev stack. Stop also cancels a start that is stuck.                       |
-| Rebase              | Fetches main and runs `git rebase --autostash` onto it. On conflicts it aborts and tells you. |
+| Rebase / Merge      | Fetches main, then rebases onto it or merges it in (`--autostash`). Aborts on conflicts.      |
 | `</>`               | Opens the worktree in the editor.                                                             |
-| `>_`                | Opens a terminal window in the worktree.                                                      |
+| `>_`                | Opens a terminal window in the worktree, in the terminal chosen in Settings.                  |
 | Claude icon         | Starts a Claude Code session in the worktree, in the Claude desktop app.                      |
 | Release (exit icon) | Stops the stack, then runs `release`, or stashes tracked changes and detaches at main.        |
 | ⋯                   | Change branch, Show in Finder, Show start log.                                                |
@@ -221,7 +220,14 @@ Changing branch stashes tracked changes first, and restarts a running stack on t
 | `↰2`  | 2 commits on the branch that `origin/main` lacks. |
 | `↑1`  | 1 commit not yet pushed to the branch's upstream. |
 
-⌘R refreshes everything now. ⌘O opens another directory.
+The refresh button in the title bar, or ⌘R, refreshes everything now. ⌘O opens another directory.
+
+**Settings** (the gear in the title bar, or ⌘,) apply to every pool and are stored in the app's preferences:
+
+| Setting          | Options                                                                                   |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| Terminal         | Automatic (the first installed of Ghostty, iTerm, Warp, Terminal), or one of those.       |
+| Update from main | Rebase (the default) or Merge. Sets what the tile's update button does, and its label.    |
 
 ## How state is detected
 

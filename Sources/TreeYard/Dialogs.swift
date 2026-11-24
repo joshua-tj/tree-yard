@@ -18,6 +18,8 @@ struct DialogHost: View {
                     if let slot = store.slots.first(where: { $0.id == id }) { ReleaseDialog(slot: slot) }
                 case .setup:
                     SetupDialog()
+                case .settings:
+                    SettingsDialog()
                 }
             }
             .padding(24)
@@ -407,6 +409,97 @@ private struct StatusList: View {
         .background(RoundedRectangle(cornerRadius: 6).fill(T.surface))
         .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(T.line))
         .accessibilityLabel("Uncommitted changes")
+    }
+}
+
+// MARK: Settings
+
+struct SettingsDialog: View {
+    @EnvironmentObject private var store: Store
+
+    var body: some View {
+        let terminals = TerminalApp.installed
+        DialogCard(width: 448) {
+            DialogTitle(text: "Settings")
+
+            SettingRow(
+                title: "Terminal",
+                detail: store.terminal.isEmpty
+                    ? "Opens \(terminals.first?.name ?? "Terminal"), the first one installed."
+                    : "The terminal button opens the worktree here."
+            ) {
+                Segmented(
+                    options: [("", "Automatic")] + terminals.map { ($0.id, $0.name) }, selection: $store.terminal)
+            }
+            .padding(.top, 20)
+
+            SettingRow(
+                title: "Update from \(store.base)",
+                detail: store.updateMethod == .rebase
+                    ? "Replays the branch's commits on top of main. Rewrites history."
+                    : "Merges main into the branch with a merge commit. Keeps history."
+            ) {
+                Segmented(
+                    options: UpdateMethod.allCases.map { ($0, $0.label) }, selection: $store.updateMethod)
+            }
+            .padding(.top, 20)
+
+            HStack {
+                Spacer()
+                Button("Done") { store.dialog = nil }
+                    .buttonStyle(.aurora(.solid, size: 2))
+                    .keyboardShortcut(.defaultAction)
+            }
+            .padding(.top, 24)
+        }
+    }
+}
+
+private struct SettingRow<Control: View>: View {
+    var title: String
+    var detail: String
+    @ViewBuilder var control: Control
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title).font(.system(size: 14, weight: .medium))
+            control
+            Text(detail).font(.system(size: 13)).foregroundStyle(T.muted).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+/// A row of options where one is picked, in the design system's muted track.
+private struct Segmented<Value: Hashable>: View {
+    var options: [(value: Value, label: String)]
+    @Binding var selection: Value
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(options, id: \.value) { option in
+                let on = option.value == selection
+                Button {
+                    selection = option.value
+                } label: {
+                    Text(option.label)
+                        .font(.system(size: 13, weight: on ? .medium : .regular))
+                        .foregroundStyle(on ? T.fg : T.muted)
+                        .padding(.horizontal, 12)
+                        .frame(height: 28)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(on ? T.raised : .clear)
+                                .shadow(color: .black.opacity(on ? 0.08 : 0), radius: 1, y: 1)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .pointerCursor()
+                .accessibilityAddTraits(on ? .isSelected : [])
+            }
+        }
+        .padding(2)
+        .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(T.matrixMutedHover))
     }
 }
 

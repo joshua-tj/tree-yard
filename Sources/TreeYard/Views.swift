@@ -33,8 +33,13 @@ struct RootView: View {
     @ToolbarContentBuilder private var header: some ToolbarContent {
         if #available(macOS 26.0, *) {
             ToolbarItem(placement: .navigation) { HeaderTitle() }.sharedBackgroundVisibility(.hidden)
+            ToolbarSpacer(.flexible)
+            ToolbarItem(placement: .primaryAction) { HeaderActions() }.sharedBackgroundVisibility(.hidden)
         } else {
             ToolbarItem(placement: .navigation) { HeaderTitle() }
+            ToolbarItem(placement: .primaryAction) {
+                HStack { Spacer(); HeaderActions() }
+            }
         }
     }
 
@@ -98,11 +103,57 @@ struct HeaderTitle: View {
         }
         items.append(.divider)
         items.append(MenuItem(title: "Open directory…", icon: .symbol("folder.badge.plus"), action: { store.pickRoot() }))
-        items.append(MenuItem(title: "Refresh", icon: .symbol("arrow.clockwise"), action: { store.refreshNow() }))
         // The title bar is a separate view tree, so the menu is placed from the pointer's x.
         let x = NSApp.keyWindow?.mouseLocationOutsideOfEventStream.x ?? 240
         store.menu = MenuRequest(
             items: items, anchor: CGRect(x: max(x - 60, 12), y: 0, width: 0, height: 0), belowTitleBar: true)
+    }
+}
+
+/// Refresh and Settings, at the title bar's right edge.
+struct HeaderActions: View {
+    @EnvironmentObject private var store: Store
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Button {
+                store.refreshNow()
+            } label: {
+                RefreshGlyph(spinning: store.refreshing)
+            }
+            .buttonStyle(.aurora(.ghost, iconOnly: true))
+            .disabled(store.root == nil)
+            .help(store.refreshing ? "Refreshing…" : "Refresh (⌘R)")
+            .accessibilityLabel(store.refreshing ? "Refreshing" : "Refresh")
+
+            Button {
+                store.dialog = .settings
+            } label: {
+                Image(systemName: "gearshape").font(.system(size: 12, weight: .medium))
+            }
+            .buttonStyle(.aurora(.ghost, iconOnly: true))
+            .help("Settings (⌘,)")
+            .accessibilityLabel("Settings")
+        }
+        .padding(.trailing, 4)
+    }
+}
+
+/// The refresh arrow, turning for as long as a manual refresh runs.
+private struct RefreshGlyph: View {
+    var spinning: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        // With reduced motion the arrow dims instead of turning.
+        TimelineView(.animation(paused: !spinning || reduceMotion)) { context in
+            let turn = spinning && !reduceMotion
+                ? context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 0.8) / 0.8 : 0
+            Image(systemName: "arrow.clockwise")
+                .font(.system(size: 11, weight: .semibold))
+                .rotationEffect(.degrees(turn * 360))
+                .opacity(spinning && reduceMotion ? 0.4 : 1)
+        }
     }
 }
 
