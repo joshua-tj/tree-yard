@@ -177,6 +177,19 @@ struct SlotTile: View {
             .tip("Open in terminal")
             .accessibilityLabel("Open slot \(slot.id) in a terminal")
 
+            Button {
+                store.openClaude(slot.id)
+            } label: {
+                if let icon = Store.claudeIcon {
+                    Image(nsImage: icon).resizable().interpolation(.high).frame(width: 16, height: 16)
+                } else {
+                    Image(systemName: "sparkle").font(.system(size: 11, weight: .semibold))
+                }
+            }
+            .buttonStyle(.aurora(.outline, iconOnly: true))
+            .tip("Open in Claude Code")
+            .accessibilityLabel("Open slot \(slot.id) in Claude Code")
+
             Spacer(minLength: 0)
 
             Button {

@@ -204,6 +204,7 @@ Don't put secrets in `treeyard.json`.
 | Rebase              | Fetches main and runs `git rebase --autostash` onto it. On conflicts it aborts and tells you. |
 | `</>`               | Opens the worktree in the editor.                                                             |
 | `>_`                | Opens a terminal window in the worktree.                                                      |
+| Claude icon         | Starts a Claude Code session in the worktree, in the Claude desktop app.                      |
 | Release (exit icon) | Stops the stack, then runs `release`, or stashes tracked changes and detaches at main.        |
 | ⋯                   | Change branch, Show in Finder, Show start log.                                                |
 | `:3100 ↗`           | Opens the running stack in the browser.                                                       |

@@ -536,6 +536,27 @@ final class Store: ObservableObject {
             [URL(fileURLWithPath: slot.path)], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     }
 
+    /// The installed Claude app's own icon, read from the app so the artwork isn't shipped here.
+    static let claudeIcon: NSImage? = URL(string: "claude://code").flatMap {
+        NSWorkspace.shared.urlForApplication(toOpen: $0)
+    }.map { NSWorkspace.shared.icon(forFile: $0.path) }
+
+    /// Starts a Claude Code session in the worktree through the desktop app's deep link.
+    func openClaude(_ id: String) {
+        guard let slot = slot(id) else { return }
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "-._~")
+        guard let folder = slot.path.addingPercentEncoding(withAllowedCharacters: allowed),
+            let url = URL(string: "claude://code/new?folder=\(folder)")
+        else { return }
+        if NSWorkspace.shared.urlForApplication(toOpen: url) == nil {
+            alert = AlertInfo(
+                title: "Couldn't open Claude Code", message: "No app on this Mac handles claude:// links.")
+        } else {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
     func openStack(_ id: String) {
         guard let slot = slot(id), let url = config.url(for: slot) else { return }
         NSWorkspace.shared.open(url)
