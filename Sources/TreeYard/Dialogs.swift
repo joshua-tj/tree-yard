@@ -300,6 +300,7 @@ struct ReleaseDialog: View {
     let slot: Slot
     @EnvironmentObject private var store: Store
     @State private var unpushed = 0
+    @State private var changes: [Git.Change] = []
     @State private var working = false
 
     var body: some View {
@@ -340,6 +341,10 @@ struct ReleaseDialog: View {
                 .padding(.top, 12)
             }
 
+            if !changes.isEmpty {
+                StatusList(changes: changes).padding(.top, 8)
+            }
+
             HStack(spacing: 8) {
                 Spacer()
                 Button("Cancel") { store.dialog = nil }
@@ -358,6 +363,7 @@ struct ReleaseDialog: View {
             .padding(.top, 24)
         }
         .task { unpushed = slot.branch == nil ? 0 : await Git.unpushedCount(path: slot.path) }
+        .task { if slot.dirty > 0 { changes = await Git.changes(path: slot.path) } }
     }
 
     private var lead: String {
@@ -367,6 +373,40 @@ struct ReleaseDialog: View {
             return (stop.isEmpty ? "Runs " : stop + "runs ") + "`\(command)` to return the slot to the pool. "
         }
         return (stop.isEmpty ? "Checks out " : stop + "checks out ") + "\(store.base) with a detached HEAD. "
+    }
+}
+
+/// The worktree's `git status`, one file per row, scrolling once it gets long.
+private struct StatusList: View {
+    let changes: [Git.Change]
+    private let rowHeight: CGFloat = 20
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(changes.enumerated()), id: \.offset) { _, change in
+                    HStack(spacing: 8) {
+                        Text(change.code)
+                            .foregroundStyle(change.untracked ? T.subtle : T.rubyFg)
+                            .frame(width: 18, alignment: .leading)
+                        Text(change.path)
+                            .foregroundStyle(change.untracked ? T.muted : T.fg)
+                            .lineLimit(1)
+                            .truncationMode(.head)
+                            .help(change.path)
+                    }
+                    .font(Fonts.mono(11))
+                    .frame(height: rowHeight)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+        }
+        .frame(height: min(CGFloat(changes.count), 8) * rowHeight + 8)
+        .background(RoundedRectangle(cornerRadius: 6).fill(T.surface))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(T.line))
+        .accessibilityLabel("Uncommitted changes")
     }
 }
 

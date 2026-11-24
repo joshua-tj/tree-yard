@@ -188,6 +188,23 @@ enum Git {
         }
     }
 
+    /// One line of `git status --short`: the two-letter state, trimmed, and the path.
+    struct Change: Equatable {
+        var code: String
+        var path: String
+        var untracked: Bool { code == "??" }
+    }
+
+    static func changes(path: String) async -> [Change] {
+        let result = await run(["status", "--porcelain"], at: path)
+        guard result.ok else { return [] }
+        return result.out.split(separator: "\n").compactMap { line in
+            guard line.count > 3 else { return nil }
+            return Change(
+                code: line.prefix(2).trimmingCharacters(in: .whitespaces), path: String(line.dropFirst(3)))
+        }
+    }
+
     static func info(path: String, base: String) async -> Info? {
         async let statusResult = run(["status", "--porcelain=v2", "--branch"], at: path)
         async let countResult = run(["rev-list", "--left-right", "--count", "\(base)...HEAD"], at: path)
