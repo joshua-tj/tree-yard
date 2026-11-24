@@ -143,6 +143,7 @@ is re-read every 15 seconds, so edits apply without a restart.
 | `services` | List of `{"name", "port"}`. The tile shows how many are up, with the full list on click.                  |
 | `release`  | Frees a slot, run in the pool folder. Without it, Tree Yard stashes tracked changes and detaches at main. |
 | `editor`   | Opens the worktree in an editor. Defaults to VS Code.                                                     |
+| `terminal` | Opens a terminal in the worktree. Defaults to Ghostty, iTerm or Warp if installed, else Terminal.         |
 
 **Placeholders**, filled per slot in every value:
 
@@ -202,6 +203,7 @@ Don't put secrets in `treeyard.json`.
 | Run / Stop          | Starts or stops the dev stack. Stop also cancels a start that is stuck.                       |
 | Rebase              | Fetches main and runs `git rebase --autostash` onto it. On conflicts it aborts and tells you. |
 | `</>`               | Opens the worktree in the editor.                                                             |
+| `>_`                | Opens a terminal window in the worktree.                                                      |
 | Release (exit icon) | Stops the stack, then runs `release`, or stashes tracked changes and detaches at main.        |
 | ⋯                   | Change branch, Show in Finder, Show start log.                                                |
 | `:3100 ↗`           | Opens the running stack in the browser.                                                       |

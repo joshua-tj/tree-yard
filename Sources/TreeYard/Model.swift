@@ -83,6 +83,7 @@ struct RootConfig: Equatable {
     var url: String?
     var release: String?
     var editor: String?
+    var terminal: String?
     /// Service names and port templates, in the order they are listed.
     var services: [ServiceTemplate] = []
 
@@ -110,7 +111,8 @@ struct RootConfig: Equatable {
         return (
             RootConfig(
                 start: string("start"), stop: string("stop"), port: string("port"), url: string("url"),
-                release: string("release"), editor: string("editor"), services: services),
+                release: string("release"), editor: string("editor"), terminal: string("terminal"),
+                services: services),
             nil
         )
     }

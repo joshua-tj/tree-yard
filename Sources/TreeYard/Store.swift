@@ -515,6 +515,27 @@ final class Store: ObservableObject {
         }
     }
 
+    /// Opens a terminal window in the worktree: the first installed of these, ending with Terminal.
+    private static let terminals = [
+        "com.mitchellh.ghostty", "com.googlecode.iterm2", "dev.warp.Warp-Stable", "com.apple.Terminal",
+    ]
+
+    func openTerminal(_ id: String) {
+        guard let slot = slot(id) else { return }
+        if let template = config.terminal {
+            Task {
+                let result = await Shell.sh(config.expand(template, slot: slot, shell: true), cwd: slot.path)
+                if !result.ok { fail("Couldn't open a terminal", result) }
+            }
+            return
+        }
+        guard let app = Self.terminals.lazy.compactMap({
+            NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0)
+        }).first else { return }
+        NSWorkspace.shared.open(
+            [URL(fileURLWithPath: slot.path)], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+    }
+
     func openStack(_ id: String) {
         guard let slot = slot(id), let url = config.url(for: slot) else { return }
         NSWorkspace.shared.open(url)
@@ -563,6 +584,7 @@ final class Store: ObservableObject {
             - "release": command that frees a slot, run in the pool folder. Without it, Tree Yard stashes tracked changes and detaches at the default branch.
             - "services": optional list of the stack's services, each {"name": "api", "port": "30{slot}1"}. Tree Yard shows which are up by their ports.
             - "editor": command that opens the worktree in an editor. Defaults to VS Code.
+            - "terminal": command that opens a terminal in the worktree. Defaults to Ghostty, iTerm or Warp if installed, else Terminal.
 
             Every value may use {slot} (the slot's folder name, such as 1), {index} (its 1-based position), {port} and \
             {path} (the worktree, already shell-quoted in commands). Commands also get TREEYARD_SLOT, TREEYARD_INDEX, \

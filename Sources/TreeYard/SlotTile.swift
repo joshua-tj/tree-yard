@@ -168,6 +168,15 @@ struct SlotTile: View {
             .tip("Open in VS Code")
             .accessibilityLabel("Open slot \(slot.id) in VS Code")
 
+            Button {
+                store.openTerminal(slot.id)
+            } label: {
+                Image(systemName: "terminal").font(.system(size: 10, weight: .semibold))
+            }
+            .buttonStyle(.aurora(.outline, iconOnly: true))
+            .tip("Open in terminal")
+            .accessibilityLabel("Open slot \(slot.id) in a terminal")
+
             Spacer(minLength: 0)
 
             Button {
