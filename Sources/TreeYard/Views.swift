@@ -139,21 +139,52 @@ struct HeaderActions: View {
     }
 }
 
-/// The refresh arrow, turning for as long as a manual refresh runs.
+/// The refresh arrow. During a manual refresh it becomes a small orb of dots with drops falling through it.
 private struct RefreshGlyph: View {
     var spinning: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        // With reduced motion the arrow dims instead of turning.
-        TimelineView(.animation(paused: !spinning || reduceMotion)) { context in
-            let turn = spinning && !reduceMotion
-                ? context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 0.8) / 0.8 : 0
-            Image(systemName: "arrow.clockwise")
-                .font(.system(size: 11, weight: .semibold))
-                .rotationEffect(.degrees(turn * 360))
-                .opacity(spinning && reduceMotion ? 0.4 : 1)
+        if spinning {
+            // With reduced motion the orb holds still.
+            TimelineView(.animation(paused: reduceMotion)) { context in
+                RainOrb(time: reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate)
+            }
+            .transition(.opacity)
+        } else {
+            Image(systemName: "arrow.clockwise").font(.system(size: 11, weight: .semibold)).transition(.opacity)
         }
+    }
+}
+
+/// A 5×5 grid of dots with the corners cut to make a circle. A bright drop runs down each column
+/// with a fading tail, each column out of step with the next.
+private struct RainOrb: View {
+    var time: TimeInterval
+
+    private static let count = 5
+    private static let offsets: [Double] = [0.0, 3.1, 1.3, 4.4, 2.2]
+    private static let tail = 3.0
+
+    var body: some View {
+        Canvas { context, size in
+            let step = size.width / CGFloat(Self.count)
+            let dot = step * 0.62
+            let cycle = Double(Self.count) + Self.tail
+            for column in 0..<Self.count {
+                let head = (time * 9 + Self.offsets[column]).truncatingRemainder(dividingBy: cycle)
+                for row in 0..<Self.count {
+                    if (column == 0 || column == Self.count - 1) && (row == 0 || row == Self.count - 1) { continue }
+                    let behind = head - Double(row)
+                    let glow = behind >= 0 && behind < Self.tail ? 1 - behind / Self.tail : 0
+                    let rect = CGRect(
+                        x: CGFloat(column) * step + (step - dot) / 2, y: CGFloat(row) * step + (step - dot) / 2,
+                        width: dot, height: dot)
+                    context.fill(Path(ellipseIn: rect), with: .color(T.fg.opacity(0.16 + 0.84 * glow)))
+                }
+            }
+        }
+        .frame(width: 14, height: 14)
     }
 }
 

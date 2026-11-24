@@ -78,6 +78,7 @@ final class Store: ObservableObject {
             case "start": start(p[1])
             case "stop": await stop(p[1])
             case "rebase": rebase(p[1])
+            case "refreshing": refreshing = true
             case "switch": _ = await changeBranch(p[1], to: p[2], create: false)
             case "create": _ = await changeBranch(p[1], to: p[2], create: true)
             case "release": _ = await release(p[1])
