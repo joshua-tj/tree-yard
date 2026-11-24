@@ -55,7 +55,7 @@ struct RootView: View {
                 VStack(spacing: 24) {
                     MainStatus()
                     LazyVGrid(
-                        columns: [GridItem(.adaptive(minimum: 384, maximum: 520), spacing: 16)], spacing: 16
+                        columns: [GridItem(.adaptive(minimum: 384), spacing: 16)], spacing: 16
                     ) {
                         ForEach(store.slots) { slot in SlotTile(slot: slot) }
                     }
