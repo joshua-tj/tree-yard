@@ -541,6 +541,20 @@ final class Store: ObservableObject {
         NSWorkspace.shared.urlForApplication(toOpen: $0)
     }.map { NSWorkspace.shared.icon(forFile: $0.path) }
 
+    /// The same icon with half its colour, for the button at rest.
+    static let claudeIconMuted: NSImage? = claudeIcon.flatMap { icon in
+        let side = 128
+        var rect = CGRect(x: 0, y: 0, width: side, height: side)
+        guard let cg = icon.cgImage(forProposedRect: &rect, context: nil, hints: nil),
+            let filter = CIFilter(name: "CIColorControls", parameters: [
+                kCIInputImageKey: CIImage(cgImage: cg), kCIInputSaturationKey: 0.5,
+            ]),
+            let output = filter.outputImage,
+            let gray = CIContext().createCGImage(output, from: output.extent)
+        else { return icon }
+        return NSImage(cgImage: gray, size: NSSize(width: side, height: side))
+    }
+
     /// Starts a Claude Code session in the worktree through the desktop app's deep link.
     func openClaude(_ id: String) {
         guard let slot = slot(id) else { return }

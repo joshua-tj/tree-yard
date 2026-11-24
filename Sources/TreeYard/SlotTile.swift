@@ -159,36 +159,33 @@ struct SlotTile: View {
             .buttonStyle(.aurora(.outline))
             .disabled(slot.behind == 0 || slot.rebasing || slot.branch == nil)
 
-            Button {
+            OpenInButton(tip: "Open in VS Code", label: "Open slot \(slot.id) in VS Code") {
                 store.openEditor(slot.id)
-            } label: {
-                Image(systemName: "chevron.left.forwardslash.chevron.right").font(.system(size: 10, weight: .semibold))
+            } glyph: { hovered in
+                AppGlyph(color: hovered ? Color(red: 0.0, green: 0.47, blue: 0.83) : Color(red: 0.28, green: 0.515, blue: 0.695)) {
+                    Image(systemName: "chevron.left.forwardslash.chevron.right").font(.system(size: 7.5, weight: .bold))
+                }
             }
-            .buttonStyle(.aurora(.outline, iconOnly: true))
-            .tip("Open in VS Code")
-            .accessibilityLabel("Open slot \(slot.id) in VS Code")
 
-            Button {
+            OpenInButton(tip: "Open in terminal", label: "Open slot \(slot.id) in a terminal") {
                 store.openTerminal(slot.id)
-            } label: {
-                Image(systemName: "terminal").font(.system(size: 10, weight: .semibold))
+            } glyph: { hovered in
+                AppGlyph(color: hovered ? .black : Color(white: 0.3)) {
+                    Text(">_").font(.system(size: 8, weight: .bold, design: .monospaced)).fixedSize()
+                }
             }
-            .buttonStyle(.aurora(.outline, iconOnly: true))
-            .tip("Open in terminal")
-            .accessibilityLabel("Open slot \(slot.id) in a terminal")
 
-            Button {
+            OpenInButton(tip: "Open in Claude Code", label: "Open slot \(slot.id) in Claude Code") {
                 store.openClaude(slot.id)
-            } label: {
-                if let icon = Store.claudeIcon {
-                    Image(nsImage: icon).resizable().interpolation(.high).frame(width: 16, height: 16)
+            } glyph: { hovered in
+                if let icon = hovered ? Store.claudeIcon : Store.claudeIconMuted {
+                    // App icons carry their own margin, so the artwork matches the 15pt tiles beside it.
+                    Image(nsImage: icon).resizable().interpolation(.high).frame(width: 18, height: 18)
+                        .frame(width: 15, height: 15)
                 } else {
                     Image(systemName: "sparkle").font(.system(size: 11, weight: .semibold))
                 }
             }
-            .buttonStyle(.aurora(.outline, iconOnly: true))
-            .tip("Open in Claude Code")
-            .accessibilityLabel("Open slot \(slot.id) in Claude Code")
 
             Spacer(minLength: 0)
 
@@ -443,5 +440,36 @@ struct PRSummary: View {
         case .changes: return T.rubyFg
         case .merged: return T.pulseFg
         }
+    }
+}
+
+/// One of the open-in buttons: its tile is muted at rest and takes its app's full colour under the pointer.
+private struct OpenInButton<Glyph: View>: View {
+    var tip: String
+    var label: String
+    var action: () -> Void
+    @ViewBuilder var glyph: (Bool) -> Glyph
+    @State private var hovered = false
+
+    var body: some View {
+        Button(action: action) { glyph(hovered) }
+            .buttonStyle(.aurora(.outline, iconOnly: true))
+            .onHover { hovered = $0 }
+            .animation(.easeOut(duration: 0.12), value: hovered)
+            .tip(tip)
+            .accessibilityLabel(label)
+    }
+}
+
+/// A small app-icon tile with a white mark, so the open-in buttons read as one set.
+private struct AppGlyph<Mark: View>: View {
+    var color: Color
+    @ViewBuilder var mark: Mark
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 3.5, style: .continuous)
+            .fill(color)
+            .frame(width: 15, height: 15)
+            .overlay(mark.foregroundColor(.white))
     }
 }
