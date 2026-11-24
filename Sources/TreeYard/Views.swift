@@ -193,8 +193,20 @@ struct MainStatus: View {
     @EnvironmentObject private var store: Store
 
     var body: some View {
-        HStack(spacing: 16) {
-            GitGlyph(kind: .commit, size: 18, color: T.muted)
+        HStack(spacing: 12) {
+            if let owner = store.ownerAvatar {
+                AsyncImage(url: owner) { image in
+                    image.resizable().interpolation(.high)
+                } placeholder: {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous).fill(T.surface)
+                }
+                .frame(width: 28, height: 28)
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(T.line))
+                .accessibilityHidden(true)
+            } else {
+                GitGlyph(kind: .commit, size: 18, color: T.muted).frame(width: 28, height: 28)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(store.repoName).font(Fonts.mono(12)).foregroundStyle(T.muted)
                 Text(store.mainSubject ?? "No commits on \(store.base) yet")
@@ -205,6 +217,19 @@ struct MainStatus: View {
                     .animation(.easeOut(duration: 0.15), value: store.fetching)
             }
             Spacer(minLength: 12)
+            if let avatar = store.mainAvatar {
+                AsyncImage(url: avatar) { image in
+                    image.resizable().interpolation(.high)
+                } placeholder: {
+                    Circle().fill(T.surface)
+                }
+                .frame(width: 20, height: 20)
+                .clipShape(Circle())
+                .overlay(Circle().strokeBorder(T.line))
+                .help(store.mainAuthor ?? "")
+                .accessibilityLabel(store.mainAuthor.map { "Commit by \($0)" } ?? "Commit author")
+                .padding(.trailing, -8)
+            }
             if let date = store.mainDate {
                 TimelineView(.periodic(from: .now, by: 30)) { context in
                     Text(ago(date, now: context.date)).font(.system(size: 14)).foregroundStyle(T.muted).fixedSize()

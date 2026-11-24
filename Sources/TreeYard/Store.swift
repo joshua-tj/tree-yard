@@ -25,6 +25,9 @@ final class Store: ObservableObject {
     @Published var base = "origin/main"
     @Published var mainSubject: String?
     @Published var mainDate: Date?
+    @Published var mainAuthor: String?
+    @Published var mainAvatar: URL?
+    private var mainSha: String?
     @Published var fetching = false
     @Published var refreshing = false
     @Published var config = RootConfig()
@@ -47,6 +50,12 @@ final class Store: ObservableObject {
     private let defaults = UserDefaults.standard
 
     /// The repo as the header shows it.
+    /// The GitHub avatar of the repo's owner, a person or an organisation.
+    var ownerAvatar: URL? {
+        guard let owner = repoSlug?.split(separator: "/").first else { return nil }
+        return URL(string: "https://github.com/\(owner).png?size=64")
+    }
+
     var repoName: String { repoSlug ?? root?.lastPathComponent ?? "" }
     /// `main`, for labels.
     var baseName: String { base.hasPrefix("origin/") ? String(base.dropFirst(7)) : base }
@@ -142,6 +151,9 @@ final class Store: ObservableObject {
         repoSlug = nil
         mainSubject = nil
         mainDate = nil
+        mainAuthor = nil
+        mainAvatar = nil
+        mainSha = nil
         config = RootConfig()
         configError = nil
         dialog = nil
@@ -216,7 +228,7 @@ final class Store: ObservableObject {
             for await (name, info) in group { result[name] = info }
             return result
         }
-        let main: (subject: String, date: Date)?
+        let main: (subject: String, date: Date, sha: String, author: String)?
         if let first = found.first { main = await Git.latestCommit(path: first.path, ref: base) } else { main = nil }
         guard gen == generation else { return }
 
@@ -247,6 +259,15 @@ final class Store: ObservableObject {
         if let main {
             if mainSubject != main.subject { mainSubject = main.subject }
             if mainDate != main.date { mainDate = main.date }
+            if mainAuthor != main.author { mainAuthor = main.author }
+            // Looked up once per commit, as soon as the repo's GitHub name is known.
+            if mainSha != main.sha, let slug = repoSlug, let path = next.first?.path {
+                mainSha = main.sha
+                Task {
+                    let url = await Git.avatar(sha: main.sha, slug: slug, path: path)
+                    if mainSha == main.sha { mainAvatar = url }
+                }
+            }
         }
         loaded = true
         if branchChanged { Task { await self.refreshPRs() } }

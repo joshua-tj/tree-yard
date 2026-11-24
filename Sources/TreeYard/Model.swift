@@ -280,11 +280,23 @@ enum Git {
         return parts.count >= 2 ? parts.suffix(2).joined(separator: "/") : nil
     }
 
-    static func latestCommit(path: String, ref: String) async -> (subject: String, date: Date)? {
-        let r = await run(["log", "-1", "--format=%s%x1f%ct", ref], at: path)
+    static func latestCommit(
+        path: String, ref: String
+    ) async -> (subject: String, date: Date, sha: String, author: String)? {
+        let r = await run(["log", "-1", "--format=%s%x1f%ct%x1f%H%x1f%an", ref], at: path)
         let parts = r.trimmed.components(separatedBy: "\u{1f}")
-        guard r.ok, parts.count == 2, let t = TimeInterval(parts[1]) else { return nil }
-        return (parts[0], Date(timeIntervalSince1970: t))
+        guard r.ok, parts.count == 4, let t = TimeInterval(parts[1]) else { return nil }
+        return (parts[0], Date(timeIntervalSince1970: t), parts[2], parts[3])
+    }
+
+    /// The GitHub avatar of a commit's author, when the commit is on GitHub and maps to an account.
+    static func avatar(sha: String, slug: String, path: String) async -> URL? {
+        let r = await Shell.run(
+            ["gh", "api", "repos/\(slug)/commits/\(sha)", "--jq", ".author.avatar_url // empty"], cwd: path,
+            timeout: 30)
+        guard r.ok, var parts = URLComponents(string: r.trimmed), parts.host != nil else { return nil }
+        parts.queryItems = (parts.queryItems ?? []) + [URLQueryItem(name: "s", value: "64")]
+        return parts.url
     }
 
     static func unpushedCount(path: String) async -> Int {
