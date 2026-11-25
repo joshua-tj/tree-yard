@@ -17,6 +17,21 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
+        #if DEBUG
+        .overlay(alignment: .bottom) {
+            if let caption = store.caption {
+                Text(caption)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(T.raised)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(Capsule().fill(oklch(0.27, 0.045, 152)))
+                    .padding(.bottom, 24)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.15), value: store.caption)
+        #endif
         .animation(.easeOut(duration: 0.1), value: store.menu?.id)
         .overlay(alignment: .top) { Rectangle().fill(T.line).frame(height: 1) }
         .animation(.easeOut(duration: 0.18), value: store.dialog)

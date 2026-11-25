@@ -290,7 +290,7 @@ SDK needs a compiler plugin that ships with Xcode.
 | `Sources/TreeYard/Theme.swift`    | Colours, fonts, button style, dropdown menu.                   |
 | `Sources/TreeYard/SVG.swift`      | The illustrations and glyphs.                                  |
 
-**Checking the app without the pointer.** The debug build has two hooks, set as environment variables on the
+**Checking the app without the pointer.** The debug build has a few hooks, set as environment variables on the
 binary:
 
 ```sh
@@ -302,10 +302,22 @@ TREEYARD_SCRIPT="start:1,sleep:8,menu:services,sleep:5,stop:1" \
 - `TREEYARD_SNAPSHOT` writes a picture of the window to that path every two seconds.
 - `TREEYARD_SCRIPT` runs comma-separated steps against the store: `start:<slot>`, `stop:<slot>`,
   `rebase:<slot>`, `switch:<slot>:<branch>`, `create:<slot>:<branch>`, `release:<slot>`,
-  `menu:tile|header|services`, `dialog:branch|new|release|setup:<slot>`, and `sleep:<seconds>`.
+  `install:<slot>`, `refresh`, `menu:tile|header|services`, `dialog:branch|new|release:<slot>`,
+  `dialog:settings|setup`, `close`, `caption:<text>`, `sleep:<seconds>` and `quit`.
+- `TREEYARD_TIPS=1` shows every tooltip at once, for checking them in a snapshot.
+- `TREEYARD_RECORD=/dir` writes the window as numbered frames for a demo video.
 
-The debug and release builds share settings, so the debug build changes which folder the release build opens
-next.
+The debug and release builds share settings. A run with any of these hooks set doesn't change which folder
+the app opens next; opening a folder in the debug build by hand does.
+
+**Demo videos.** `.claude/skills/capture-demo-video` records a short video of a change by driving the debug
+build with a script against a throwaway pool. Its `SKILL.md` has the steps; in short:
+
+```sh
+K=.claude/skills/capture-demo-video
+$K/scripts/make-demo-pool.sh /tmp/yard-demo
+$K/scripts/record-demo.py /tmp/yard-demo/pool --script-file $K/examples/run-and-stop.steps --out demo.mp4
+```
 
 ## License
 

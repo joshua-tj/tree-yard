@@ -38,6 +38,10 @@ final class Store: ObservableObject {
     @Published var dialog: ActiveDialog?
     @Published var alert: AlertInfo?
     @Published var menu: MenuRequest?
+    #if DEBUG
+    /// A line of text over the window, set by a script's `caption:` step for demo videos.
+    @Published var caption: String?
+    #endif
 
     /// Settings, kept in the app's preferences. An empty terminal means the first one installed.
     @Published var terminal: String { didSet { defaults.set(terminal, forKey: "terminal") } }
@@ -63,6 +67,14 @@ final class Store: ObservableObject {
     /// `main`, for labels.
     var baseName: String { base.hasPrefix("origin/") ? String(base.dropFirst(7)) : base }
 
+    #if DEBUG
+    private static let scripted = ["TREEYARD_SCRIPT", "TREEYARD_SNAPSHOT", "TREEYARD_RECORD"].contains {
+        ProcessInfo.processInfo.environment[$0] != nil
+    }
+    #else
+    private static let scripted = false
+    #endif
+
     init() {
         terminal = defaults.string(forKey: "terminal") ?? ""
         updateMethod = defaults.string(forKey: "updateMethod").flatMap(UpdateMethod.init) ?? .rebase
@@ -85,8 +97,18 @@ final class Store: ObservableObject {
         while !loaded { try? await Task.sleep(nanoseconds: 200_000_000) }
         for step in script.split(separator: ",") {
             let p = step.split(separator: ":", maxSplits: 2).map(String.init)
+            DemoRecorder.mark(String(step))
             switch p[0] {
-            case "sleep": try? await Task.sleep(nanoseconds: UInt64((Double(p[1]) ?? 1) * 1e9))
+            // "fast" waits like "sleep", and marks the wait as one a demo video should speed through.
+            case "sleep", "fast": try? await Task.sleep(nanoseconds: UInt64((Double(p[1]) ?? 1) * 1e9))
+            case "caption": caption = p.count > 1 ? p.dropFirst().joined(separator: ":") : nil
+            case "refresh": refreshNow()
+            case "close":
+                menu = nil
+                dialog = nil
+            case "quit":
+                DemoRecorder.mark("end")
+                NSApp.terminate(nil)
             case "start": start(p[1])
             case "stop": await stop(p[1])
             case "rebase": rebase(p[1])
@@ -168,9 +190,12 @@ final class Store: ObservableObject {
         watchers.values.forEach { $0.cancel() }
         watchers = [:]
 
-        defaults.set(url.path, forKey: "root")
         recents = ([url.path] + recents.filter { $0 != url.path }).prefix(8).map { $0 }
-        defaults.set(recents, forKey: "recentRoots")
+        // A scripted or recorded run leaves no trace, so it never changes which directory the app opens next.
+        if !Self.scripted {
+            defaults.set(url.path, forKey: "root")
+            defaults.set(recents, forKey: "recentRoots")
+        }
 
         loop = Task { [weak self] in
             await self?.bootstrap()

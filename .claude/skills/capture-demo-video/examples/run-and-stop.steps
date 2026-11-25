@@ -1,0 +1,17 @@
+# One step per line. Everything here plays in real time except the fast: lines.
+sleep:1
+caption:Run a slot's dev stack
+start:1
+fast:6          # booting: sped up in the video
+sleep:2
+caption:Install dependencies
+install:2
+fast:5
+sleep:1
+caption:Release a slot and see what would be lost
+dialog:release:1
+sleep:3
+close
+caption:Stop the stack
+stop:1
+sleep:2

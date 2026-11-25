@@ -52,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         #if DEBUG
             snapshotIfAsked()
+            DemoRecorder.startIfAsked()
         #endif
     }
 
@@ -71,6 +72,63 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     #endif
 }
+
+#if DEBUG
+/// Development aid: `TREEYARD_RECORD=/dir` writes the window as numbered JPEG frames, for a demo video.
+/// It draws the window's own view, so it needs no screen-recording permission, but it leaves out
+/// anything the system draws: the pointer, alerts and other apps. `marks.tsv` notes the frame each
+/// script step began on, so the video can be cut or sped up by step afterwards.
+@MainActor enum DemoRecorder {
+    static let fps = 12.0
+    static let directory = ProcessInfo.processInfo.environment["TREEYARD_RECORD"].map { URL(fileURLWithPath: $0) }
+    private static var began: Date?
+    private static var sized = false
+
+    /// Frames are numbered by the clock, not by count, so a slow capture leaves a gap instead of
+    /// making the video run fast. The gaps are filled when the video is put together.
+    private static var frame: Int { began.map { Int(Date().timeIntervalSince($0) * fps) } ?? 0 }
+
+    static func startIfAsked() {
+        guard let directory else { return }
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let size = (ProcessInfo.processInfo.environment["TREEYARD_SIZE"] ?? "1160x780").split(separator: "x")
+            .compactMap { Double($0) }
+        Timer.scheduledTimer(withTimeInterval: 1 / fps, repeats: true) { _ in
+            MainActor.assumeIsolated {
+                guard let window = NSApp.windows.first(where: { $0.isVisible && $0.contentView != nil }),
+                    let view = window.contentView?.superview
+                else { return }
+                if !sized, size.count == 2 {
+                    // A fixed size, so every take has the same picture whatever the window was left at.
+                    window.setContentSize(NSSize(width: size[0], height: size[1]))
+                    sized = true
+                    return
+                }
+                if began == nil { began = Date() }
+                guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+                view.cacheDisplay(in: view.bounds, to: rep)
+                let name = String(format: "frame-%06d.jpg", frame)
+                try? rep.representation(using: .jpeg, properties: [.compressionFactor: 0.92])?
+                    .write(to: directory.appendingPathComponent(name))
+            }
+        }
+    }
+
+    /// Notes that a script step starts on the next frame.
+    static func mark(_ step: String) {
+        guard let directory else { return }
+        let file = directory.appendingPathComponent("marks.tsv")
+        let line = Data("\(frame)\t\(step)\n".utf8)
+        if let handle = try? FileHandle(forWritingTo: file) {
+            handle.seekToEndOfFile()
+            handle.write(line)
+            try? handle.close()
+        } else {
+            try? line.write(to: file)
+        }
+    }
+}
+#endif
 
 /// The Dock icon, drawn from the same mark as the header. `--render-icon <png>` writes it out for the build.
 enum AppIcon {
