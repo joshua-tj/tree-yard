@@ -123,7 +123,7 @@ struct HeaderActions: View {
             }
             .buttonStyle(.aurora(.ghost, iconOnly: true))
             .disabled(store.root == nil)
-            .help(store.refreshing ? "Refreshing…" : "Refresh (⌘R)")
+            .tip(store.refreshing ? "Refreshing…" : "Refresh  ⌘R", below: true)
             .accessibilityLabel(store.refreshing ? "Refreshing" : "Refresh")
 
             Button {
@@ -132,7 +132,7 @@ struct HeaderActions: View {
                 Image(systemName: "gearshape").font(.system(size: 12, weight: .medium))
             }
             .buttonStyle(.aurora(.ghost, iconOnly: true))
-            .help("Settings (⌘,)")
+            .tip("Settings  ⌘,", below: true)
             .accessibilityLabel("Settings")
         }
         .padding(.trailing, 4)

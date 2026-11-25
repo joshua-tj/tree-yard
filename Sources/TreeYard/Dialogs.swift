@@ -418,23 +418,26 @@ struct SettingsDialog: View {
     @EnvironmentObject private var store: Store
 
     var body: some View {
-        let terminals = TerminalApp.installed
+        let installed = TerminalApp.installed
+        let chosen = TerminalApp.known.first { $0.id == store.terminal }
         DialogCard(width: 448) {
             DialogTitle(text: "Settings")
 
             SettingRow(
                 title: "Terminal",
-                detail: store.terminal.isEmpty
-                    ? "Opens \(terminals.first?.name ?? "Terminal"), the first one installed."
-                    : "The terminal button opens the worktree here."
+                detail: chosen == nil
+                    ? "Opens \(installed.first?.name ?? "Terminal"), the first one installed."
+                    : chosen?.url == nil
+                        ? "\(chosen?.name ?? "This terminal") isn't installed on this Mac."
+                        : "The terminal button opens the worktree here."
             ) {
                 Segmented(
-                    options: [("", "Automatic")] + terminals.map { ($0.id, $0.name) }, selection: $store.terminal)
+                    options: [("", "Automatic")] + TerminalApp.known.map { ($0.id, $0.name) }, selection: $store.terminal)
             }
             .padding(.top, 20)
 
             SettingRow(
-                title: "Update from \(store.base)",
+                title: "Pull from main",
                 detail: store.updateMethod == .rebase
                     ? "Replays the branch's commits on top of main. Rewrites history."
                     : "Merges main into the branch with a merge commit. Keeps history."

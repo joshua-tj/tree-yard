@@ -226,8 +226,8 @@ The refresh button in the title bar, or ⌘R, refreshes everything now. ⌘O ope
 
 | Setting          | Options                                                                                   |
 | ---------------- | ----------------------------------------------------------------------------------------- |
-| Terminal         | Automatic (the first installed of Ghostty, iTerm, Warp, Terminal), or one of those.       |
-| Update from main | Rebase (the default) or Merge. Sets what the tile's update button does, and its label.    |
+| Terminal         | Automatic (the first installed of Ghostty, iTerm2, Warp, Terminal), or one of those.      |
+| Pull from main   | Rebase (the default) or Merge. Sets what the tile's update button does, and its label.    |
 
 ## How state is detected
 

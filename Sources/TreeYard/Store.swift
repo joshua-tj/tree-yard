@@ -561,8 +561,14 @@ final class Store: ObservableObject {
     /// Opens a terminal window in the worktree: the one chosen in Settings, or the first installed.
     func openTerminal(_ id: String) {
         guard let slot = slot(id) else { return }
-        let installed = TerminalApp.installed
-        guard let app = (installed.first { $0.id == terminal } ?? installed.first)?.url else { return }
+        let chosen = TerminalApp.known.first { $0.id == terminal }
+        if let chosen, chosen.url == nil {
+            alert = AlertInfo(
+                title: "\(chosen.name) isn't installed",
+                message: "Install it, or pick another terminal in Settings.")
+            return
+        }
+        guard let app = (chosen ?? TerminalApp.installed.first)?.url else { return }
         NSWorkspace.shared.open(
             [URL(fileURLWithPath: slot.path)], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     }

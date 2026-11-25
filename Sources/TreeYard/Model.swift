@@ -85,7 +85,7 @@ struct TerminalApp: Identifiable, Equatable {
 
     static let known = [
         TerminalApp(id: "com.mitchellh.ghostty", name: "Ghostty"),
-        TerminalApp(id: "com.googlecode.iterm2", name: "iTerm"),
+        TerminalApp(id: "com.googlecode.iterm2", name: "iTerm2"),
         TerminalApp(id: "dev.warp.Warp-Stable", name: "Warp"),
         TerminalApp(id: "com.apple.Terminal", name: "Terminal"),
     ]

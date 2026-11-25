@@ -393,6 +393,8 @@ extension View {
 /// Used for icon-only buttons, where it stands in for the missing label.
 private struct Tip: ViewModifier {
     let text: String
+    /// Hang under the control, right edges lined up, for buttons at the top right of the window.
+    var below = false
     @State private var shown = Tip.forced
     @State private var pending: Task<Void, Never>?
 
@@ -421,7 +423,7 @@ private struct Tip: ViewModifier {
                 pending?.cancel()
                 shown = false
             })
-            .overlay(alignment: .top) {
+            .overlay(alignment: below ? .bottomTrailing : .top) {
                 if shown {
                     Text(text)
                         .font(.system(size: 11, weight: .medium))
@@ -431,7 +433,7 @@ private struct Tip: ViewModifier {
                         .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(oklch(0.27, 0.045, 152)))
                         .fixedSize()
                         // Sits wholly above the control, with a gap, so it never covers what is hovered.
-                        .offset(y: -(Self.height + 6))
+                        .offset(y: below ? Self.height + 6 : -(Self.height + 6))
                         .allowsHitTesting(false)
                         .transition(.opacity)
                 }
@@ -442,5 +444,5 @@ private struct Tip: ViewModifier {
 }
 
 extension View {
-    func tip(_ text: String) -> some View { modifier(Tip(text: text)) }
+    func tip(_ text: String, below: Bool = false) -> some View { modifier(Tip(text: text, below: below)) }
 }
