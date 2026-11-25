@@ -289,14 +289,15 @@ enum Git {
         return (parts[0], Date(timeIntervalSince1970: t), parts[2], parts[3])
     }
 
-    /// The GitHub avatar of a commit's author, when the commit is on GitHub and maps to an account.
-    static func avatar(sha: String, slug: String, path: String) async -> URL? {
+    /// The GitHub login and avatar of a commit's author, when the commit is on GitHub and maps to an account.
+    static func author(sha: String, slug: String, path: String) async -> (login: String, avatar: URL)? {
         let r = await Shell.run(
-            ["gh", "api", "repos/\(slug)/commits/\(sha)", "--jq", ".author.avatar_url // empty"], cwd: path,
-            timeout: 30)
-        guard r.ok, var parts = URLComponents(string: r.trimmed), parts.host != nil else { return nil }
+            ["gh", "api", "repos/\(slug)/commits/\(sha)", "--jq", ".author | select(.) | .login, .avatar_url"],
+            cwd: path, timeout: 30)
+        let lines = r.trimmed.split(separator: "\n").map(String.init)
+        guard r.ok, lines.count == 2, var parts = URLComponents(string: lines[1]), parts.host != nil else { return nil }
         parts.queryItems = (parts.queryItems ?? []) + [URLQueryItem(name: "s", value: "64")]
-        return parts.url
+        return parts.url.map { (lines[0], $0) }
     }
 
     static func unpushedCount(path: String) async -> Int {

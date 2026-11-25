@@ -27,6 +27,7 @@ final class Store: ObservableObject {
     @Published var mainDate: Date?
     @Published var mainAuthor: String?
     @Published var mainAvatar: URL?
+    @Published var mainLogin: String?
     private var mainSha: String?
     @Published var fetching = false
     @Published var refreshing = false
@@ -153,6 +154,7 @@ final class Store: ObservableObject {
         mainDate = nil
         mainAuthor = nil
         mainAvatar = nil
+        mainLogin = nil
         mainSha = nil
         config = RootConfig()
         configError = nil
@@ -264,8 +266,11 @@ final class Store: ObservableObject {
             if mainSha != main.sha, let slug = repoSlug, let path = next.first?.path {
                 mainSha = main.sha
                 Task {
-                    let url = await Git.avatar(sha: main.sha, slug: slug, path: path)
-                    if mainSha == main.sha { mainAvatar = url }
+                    let author = await Git.author(sha: main.sha, slug: slug, path: path)
+                    if mainSha == main.sha {
+                        mainAvatar = author?.avatar
+                        mainLogin = author?.login
+                    }
                 }
             }
         }

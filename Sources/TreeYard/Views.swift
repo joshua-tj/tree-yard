@@ -217,22 +217,25 @@ struct MainStatus: View {
                     .animation(.easeOut(duration: 0.15), value: store.fetching)
             }
             Spacer(minLength: 12)
-            if let avatar = store.mainAvatar {
-                AsyncImage(url: avatar) { image in
-                    image.resizable().interpolation(.high)
-                } placeholder: {
-                    Circle().fill(T.surface)
+            HStack(spacing: 6) {
+                if let date = store.mainDate {
+                    TimelineView(.periodic(from: .now, by: 30)) { context in
+                        Text(ago(date, now: context.date) + (store.mainLogin == nil ? "" : " by"))
+                            .font(.system(size: 14)).foregroundStyle(T.muted).fixedSize()
+                    }
                 }
-                .frame(width: 20, height: 20)
-                .clipShape(Circle())
-                .overlay(Circle().strokeBorder(T.line))
-                .help(store.mainAuthor ?? "")
-                .accessibilityLabel(store.mainAuthor.map { "Commit by \($0)" } ?? "Commit author")
-                .padding(.trailing, -8)
-            }
-            if let date = store.mainDate {
-                TimelineView(.periodic(from: .now, by: 30)) { context in
-                    Text(ago(date, now: context.date)).font(.system(size: 14)).foregroundStyle(T.muted).fixedSize()
+                if let avatar = store.mainAvatar, let login = store.mainLogin {
+                    AsyncImage(url: avatar) { image in
+                        image.resizable().interpolation(.high)
+                    } placeholder: {
+                        Circle().fill(T.surface)
+                    }
+                    .frame(width: 20, height: 20)
+                    .clipShape(Circle())
+                    .overlay(Circle().strokeBorder(T.line))
+                    .accessibilityHidden(true)
+                    Text(login).font(Fonts.mono(12)).foregroundStyle(T.fg).fixedSize()
+                        .help(store.mainAuthor ?? "")
                 }
             }
         }
