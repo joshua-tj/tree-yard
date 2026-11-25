@@ -142,6 +142,7 @@ is re-read every 15 seconds, so edits apply without a restart.
 | `url`      | What the port link opens. Defaults to `http://localhost:{port}`.                                          |
 | `services` | List of `{"name", "port"}`. The tile shows how many are up, with the full list on click.                  |
 | `release`  | Frees a slot, run in the pool folder. Without it, Tree Yard stashes tracked changes and detaches at main. |
+| `install`  | Installs dependencies, run in the worktree, e.g. `yarn install`. The install button shows only when set.  |
 | `editor`   | Opens the worktree in an editor. Defaults to VS Code.                                                     |
 
 **Placeholders**, filled per slot in every value:
@@ -201,6 +202,7 @@ Don't put secrets in `treeyard.json`.
 | ------------------- | --------------------------------------------------------------------------------------------- |
 | Run / Stop          | Starts or stops the dev stack. Stop also cancels a start that is stuck.                       |
 | Rebase / Merge      | Fetches main, then rebases onto it or merges it in (`--autostash`). Aborts on conflicts.      |
+| Box icon            | Runs `install`. Shown only when `install` is set. Shows the error if it fails.                |
 | `</>`               | Opens the worktree in the editor.                                                             |
 | `>_`                | Opens a terminal window in the worktree, in the terminal chosen in Settings.                  |
 | Claude icon         | Starts a Claude Code session in the worktree, in the Claude desktop app.                      |

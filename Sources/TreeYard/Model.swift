@@ -49,6 +49,7 @@ struct Slot: Identifiable, Equatable {
     var services: [Service] = []
 
     var rebasing = false
+    var installing = false
     var starting = false
     var stopping = false
     var listening = false
@@ -107,6 +108,7 @@ struct RootConfig: Equatable {
     var url: String?
     var release: String?
     var editor: String?
+    var install: String?
     /// Service names and port templates, in the order they are listed.
     var services: [ServiceTemplate] = []
 
@@ -134,7 +136,8 @@ struct RootConfig: Equatable {
         return (
             RootConfig(
                 start: string("start"), stop: string("stop"), port: string("port"), url: string("url"),
-                release: string("release"), editor: string("editor"), services: services),
+                release: string("release"), editor: string("editor"), install: string("install"),
+                services: services),
             nil
         )
     }

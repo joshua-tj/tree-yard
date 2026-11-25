@@ -88,6 +88,7 @@ final class Store: ObservableObject {
             case "start": start(p[1])
             case "stop": await stop(p[1])
             case "rebase": rebase(p[1])
+            case "install": install(p[1])
             case "refreshing": refreshing = true
             case "switch": _ = await changeBranch(p[1], to: p[2], create: false)
             case "create": _ = await changeBranch(p[1], to: p[2], create: true)
@@ -476,6 +477,19 @@ final class Store: ObservableObject {
         }
     }
 
+    /// Installs the worktree's dependencies with the pool's "install" command.
+    func install(_ id: String) {
+        guard let slot = slot(id), !slot.installing, let template = config.install else { return }
+        let command = config.expand(template, slot: slot, shell: true)
+        update(id) { $0.installing = true }
+        Task {
+            let result = await Shell.sh(command, cwd: slot.path, env: config.environment(for: slot), timeout: 1800)
+            update(id) { $0.installing = false }
+            if !result.ok { fail("Installing dependencies failed in slot \(id)", result) }
+            await refreshGit()
+        }
+    }
+
     /// Stashes tracked changes, switches (or creates) the branch, and restarts a running stack.
     func changeBranch(_ id: String, to branch: String, create: Bool) async -> Bool {
         guard let slot = slot(id) else { return false }
@@ -655,6 +669,7 @@ final class Store: ObservableObject {
             - "url": what the port link opens. Defaults to http://localhost:{port}.
             - "release": command that frees a slot, run in the pool folder. Without it, Tree Yard stashes tracked changes and detaches at the default branch.
             - "services": optional list of the stack's services, each {"name": "api", "port": "30{slot}1"}. Tree Yard shows which are up by their ports.
+            - "install": command that installs dependencies, run in the worktree, such as "yarn install". The tile's install button only appears when this is set.
             - "editor": command that opens the worktree in an editor. Defaults to VS Code.
 
             Every value may use {slot} (the slot's folder name, such as 1), {index} (its 1-based position), {port} and \

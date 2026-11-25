@@ -25,7 +25,7 @@ struct TreeYardApp: App {
         Window("Worktrees", id: "main") {
             RootView()
                 .environmentObject(store)
-                .frame(minWidth: 460, minHeight: 420)
+                .frame(minWidth: 490, minHeight: 420)
                 .preferredColorScheme(.light)
         }
         .defaultSize(width: 1160, height: 780)

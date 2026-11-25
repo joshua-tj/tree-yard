@@ -55,7 +55,7 @@ struct RootView: View {
                 VStack(spacing: 24) {
                     MainStatus()
                     LazyVGrid(
-                        columns: [GridItem(.adaptive(minimum: 384), spacing: 16)], spacing: 16
+                        columns: [GridItem(.adaptive(minimum: 420), spacing: 16)], spacing: 16
                     ) {
                         ForEach(store.slots) { slot in SlotTile(slot: slot) }
                     }
@@ -142,17 +142,23 @@ struct HeaderActions: View {
 /// The refresh arrow. During a manual refresh it becomes a small orb of dots with drops falling through it.
 private struct RefreshGlyph: View {
     var spinning: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         if spinning {
-            // With reduced motion the orb holds still.
-            TimelineView(.animation(paused: reduceMotion)) { context in
-                RainOrb(time: reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate)
-            }
-            .transition(.opacity)
+            LoadingOrb().transition(.opacity)
         } else {
             Image(systemName: "arrow.clockwise").font(.system(size: 11, weight: .semibold)).transition(.opacity)
+        }
+    }
+}
+
+/// The app's busy indicator: the rain orb, running. With reduced motion it holds still.
+struct LoadingOrb: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { context in
+            RainOrb(time: reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate)
         }
     }
 }

@@ -159,6 +159,23 @@ struct SlotTile: View {
             .buttonStyle(.aurora(.outline))
             .disabled(slot.behind == 0 || slot.rebasing || slot.branch == nil)
 
+            if store.config.install != nil {
+                Button {
+                    store.install(slot.id)
+                } label: {
+                    if slot.installing {
+                        LoadingOrb()
+                    } else {
+                        Image(systemName: "shippingbox").font(.system(size: 11, weight: .medium))
+                    }
+                }
+                .buttonStyle(.aurora(.outline, iconOnly: true))
+                // Not disabled while installing, which would dim the orb; a second press is ignored instead.
+                .allowsHitTesting(!slot.installing)
+                .tip(slot.installing ? "Installing dependencies…" : "Install dependencies")
+                .accessibilityLabel("Install dependencies in slot \(slot.id)")
+            }
+
             OpenInButton(tip: "Open in VS Code", label: "Open slot \(slot.id) in VS Code") {
                 store.openEditor(slot.id)
             } glyph: { hovered in
