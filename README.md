@@ -2,8 +2,8 @@
 
 A native Mac app for a pool of git worktrees. Point it at a folder of worktrees and each one becomes a
 numbered slot showing its branch, how far it is from main, its pull request, and whether its dev stack is
-running. From a slot you can run or stop the stack, rebase, switch or create a branch, open the editor, and
-release the slot.
+running. From a slot you can run or stop the stack, rebase or merge from main, install dependencies, switch
+or create a branch, open the worktree in VS Code, a terminal or Claude Code, and release the slot.
 
 ![Tree Yard showing six slots: two running, one stopped and three free](docs/screenshot.png)
 
@@ -126,6 +126,7 @@ is re-read every 15 seconds, so edits apply without a restart.
   "start": "WORKTREE_ID={slot} yarn dev",
   "stop": "WORKTREE_ID={slot} yarn dev:kill",
   "port": "3{slot}00",
+  "install": "yarn install",
   "release": "treehouse return --force {path}",
   "services": [
     { "name": "web", "port": "3{slot}00" },
@@ -178,8 +179,10 @@ these steps. Pressing Run in a pool with no `start` command shows the same task 
    group that `start` created.
 6. **Set `services`** if the stack has several servers, one entry per port, so a half-started stack is
    visible.
-7. **Set `release`** only if the pool has its own way to return a slot, such as `treehouse return`.
-8. **Check it.** Run the expanded `start` command by hand in one slot and confirm the port opens:
+7. **Set `install`** to the repo's dependency install command, such as `yarn install` or `pnpm install`.
+   The tile's install button appears only when this is set.
+8. **Set `release`** only if the pool has its own way to return a slot, such as `treehouse return`.
+9. **Check it.** Run the expanded `start` command by hand in one slot and confirm the port opens:
 
    ```sh
    lsof -nP -iTCP:<port> -sTCP:LISTEN
