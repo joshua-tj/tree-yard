@@ -22,6 +22,8 @@ final class Store: ObservableObject {
     @Published var slots: [Slot] = []
     @Published var loaded = false
     @Published var repoSlug: String?
+    /// Whether origin is on GitHub, which is where the avatars come from.
+    @Published var onGitHub = false
     @Published var base = "origin/main"
     @Published var mainSubject: String?
     @Published var mainDate: Date?
@@ -53,7 +55,7 @@ final class Store: ObservableObject {
     /// The repo as the header shows it.
     /// The GitHub avatar of the repo's owner, a person or an organisation.
     var ownerAvatar: URL? {
-        guard let owner = repoSlug?.split(separator: "/").first else { return nil }
+        guard onGitHub, let owner = repoSlug?.split(separator: "/").first else { return nil }
         return URL(string: "https://github.com/\(owner).png?size=64")
     }
 
@@ -151,6 +153,7 @@ final class Store: ObservableObject {
         slots = []
         loaded = false
         repoSlug = nil
+        onGitHub = false
         mainSubject = nil
         mainDate = nil
         mainAuthor = nil
@@ -209,6 +212,7 @@ final class Store: ObservableObject {
             guard gen == generation else { return }
             self.base = base
             self.repoSlug = slug
+            self.onGitHub = await Git.run(["remote", "get-url", "origin"], at: first.path).out.contains("github.com")
         }
         await refreshGit()
         await refreshPorts()
@@ -264,7 +268,7 @@ final class Store: ObservableObject {
             if mainDate != main.date { mainDate = main.date }
             if mainAuthor != main.author { mainAuthor = main.author }
             // Looked up once per commit, as soon as the repo's GitHub name is known.
-            if mainSha != main.sha, let slug = repoSlug, let path = next.first?.path {
+            if mainSha != main.sha, onGitHub, let slug = repoSlug, let path = next.first?.path {
                 mainSha = main.sha
                 Task {
                     let author = await Git.author(sha: main.sha, slug: slug, path: path)
